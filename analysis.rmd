@@ -1,0 +1,249 @@
+---
+title: "GGR276 Lab 2 Part 2 Sampling Data and Inferential Statistics"
+author: "Amaar Sana"
+date: "2025-03-10"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+# Part B1. Sampling Data
+## Import Data
+
+
+```{r import-data, echo = TRUE}
+GHG_emission <- read.csv("gge.csv", sep = ',', header = TRUE)
+filtered_GHG_emission <- subset(GHG_emission, !(Latitude == 0 & Longitude == 0) & !(is.na(CO2_eq)))
+```
+
+## Data exploration
+Before analyzing the data, we will explore it to become familiar with its structure and content. We will examine the column name.
+
+```{r eval=FALSE}
+colnames(filtered_GHG_emission)
+head(filtered_GHG_emission)
+unique(filtered_GHG_emission$E_NAIC_Name)
+```
+
+## Simple Random Sampling
+First, we will randomly sample 100 records.
+
+```{r}
+random_sample <- filtered_GHG_emission[sample(1:nrow(filtered_GHG_emission), size = 100, replace = FALSE), ]
+```
+
+## Stratified Sampling 
+Next, we will try stratified sampling using dplyr package.
+
+```{r message=FALSE}
+#Create a subset consisting only available Electric and Hydrogen stations 
+subset_facilities <- subset(filtered_GHG_emission, (E_NAIC_Name == 'Oil and gas extraction (except oil sands)'| E_NAIC_Name == 'Fossil-Fuel Electric Power Generation'))
+
+#Stratified Sampling
+library(dplyr)
+stratified_sample <- subset_facilities %>%
+  group_by(E_NAIC_Name) %>%
+  sample_n(size = 50, replace = FALSE) %>%
+  ungroup()
+```
+
+(4 marks) Now, it is your turn. Please create a stratified sample consisting of Oil and Gas Extraction, Fossil-Fuel Electric Power Generation, and Waste Treatment and Disposal (E_NAIC_Name = Waste Treatment and Disposal) facilities. For each category, make the sample size equal to 60. To make the result reproducible, please add code `set.seed(123)` prior to your sampling.
+
+```{r}
+set.seed(123)
+
+# using the "or" operator in R
+three_facility_subset <- subset(filtered_GHG_emission, 
+                               (E_NAIC_Name == 'Oil and gas extraction (except oil sands)' | 
+                                E_NAIC_Name == 'Fossil-Fuel Electric Power Generation' |
+                                E_NAIC_Name == 'Waste Treatment and Disposal'))
+
+three_facility_stratified <- three_facility_subset %>%
+  group_by(E_NAIC_Name) %>%
+  sample_n(size = 60, replace = FALSE) %>%
+  ungroup()
+
+```
+
+
+## Compare Sampling Technique
+(4 marks) What is the difference between simple random sampling and stratified sampling? In this case, would you use simple random sampling or stratified sampling?   
+
+Simple random sampling selects observations at random from the entire population, giving each observation an equal probability of being selected. This method might not properly represent subgroups if they vary in size in the population or if some are clustered in particular areas.
+
+Stratified sampling divides the population into subgroups called strata based on specific traits, then randomly samples from each stratum separately. This ensures we get reps from each subgroup and is better when subgroups differ significantly, not mattering if they are clustered or scattered.
+
+In this case, stratified sampling would be more better. Firstly, I'm interested in comparing emissions between distinct facility types, so I need to create strata. Second, the facility types  have different sample sizes. Therefore, using stratified sampling ensures I have equal rep from each facility type. If emissions vary between facility types, which they definitely do, stratified sampling will represent this variation more better. 
+
+
+# Part B2. Inferential Statistics
+## Two-sample difference of mean test 
+(2 marks) I wonder if the mean carbon dioxide equivalents (kt CO2 eq) emissions differs between Oil and Gas Extraction facilities with Fossil-Fuel Electric Power Generation facilities. Write the null hypothesis and alternate hypothesis.
+
+Null Hypothesis (Ho): There is no significant difference in the mean CO2 equivalent emissions between Oil and Gas Extraction facilities and Fossil-Fuel Electric Power Generation facilities.
+
+Ho: μ1 = μ2
+
+Alternative Hypothesis (Ha): There is a significant difference in the mean CO2 equivalent emissions between Oil and Gas Extraction facilities and Fossil-Fuel Electric Power Generation facilities.
+
+Ha: μ1 != μ2
+
+μ1 represents the mean CO2 equivalent emissions for Oil and Gas Extraction facilities
+μ2 represents the mean CO2 equivalent emissions for Fossil-Fuel Electric Power Generation facilities 
+
+
+(4 marks) Please select an appropriate statistical test, and provide justifications by visualizing the distribution. 
+
+- Histograms show a heavy right skew, with most values clustered at the lower end and a long tail extending to the right.
+
+- QQ plots deviate from the line, meaning that the datas are not normally distributed.
+
+- Box plots show multiple outliers and a right-skewed distribution in both facility types. Lot of points are seen in the whisker from Q3 to the Max.
+
+There are severe skewness and outliers; therefore, a non-parametric test is more appropriate than a two-sample t-test for comparing CO2 emissions between the two facility types. Thus, I will use Wilcoxon rank-sum test.
+ 
+
+```{r}
+#Visualize the Distribution
+two_facility_subset <- subset(filtered_GHG_emission, 
+                             (E_NAIC_Name == 'Oil and gas extraction (except oil sands)' | 
+                              E_NAIC_Name == 'Fossil-Fuel Electric Power Generation'))
+
+# Oil and Gas facilities histo
+hist(subset(two_facility_subset, 
+           E_NAIC_Name == 'Oil and gas extraction (except oil sands)')$CO2_eq,
+     main = "Histogram of CO2 Emissions - Oil and Gas",
+     xlab = "CO2 Emissions (kt CO2 eq)")
+
+# Power Generation facilities histo
+hist(subset(two_facility_subset, 
+           E_NAIC_Name == 'Fossil-Fuel Electric Power Generation')$CO2_eq,
+     main = "Histogram of CO2 Emissions - Power Generation",
+     xlab = "CO2 Emissions (kt CO2 eq)")
+
+# Oil and Gas facilities QQ
+qqnorm(subset(two_facility_subset, 
+             E_NAIC_Name == 'Oil and gas extraction (except oil sands)')$CO2_eq,
+       main = "QQ Plot - Oil and Gas")
+qqline(subset(two_facility_subset, 
+             E_NAIC_Name == 'Oil and gas extraction (except oil sands)')$CO2_eq)
+
+# Power Generation facilities QQ
+qqnorm(subset(two_facility_subset, 
+             E_NAIC_Name == 'Fossil-Fuel Electric Power Generation')$CO2_eq,
+       main = "QQ Plot - Power Generation")
+qqline(subset(two_facility_subset, 
+             E_NAIC_Name == 'Fossil-Fuel Electric Power Generation')$CO2_eq)
+
+# Box plots to compare the distributions and identify outliers
+boxplot(CO2_eq ~ E_NAIC_Name, data = two_facility_subset,
+        main = "Box Plot of CO2 Emissions by Facility Type",
+        xlab = "Facility Type", ylab = "CO2 Emissions (kt CO2 eq)",
+        names = c("Power Generation", "Oil and Gas"))
+```
+
+
+(4 marks) Please write R script to conduct the statistic test and interpret the results. 
+
+```{r}
+oil_gas_data <- subset(two_facility_subset, 
+                       E_NAIC_Name == 'Oil and gas extraction (except oil sands)')$CO2_eq
+power_gen_data <- subset(two_facility_subset, 
+                         E_NAIC_Name == 'Fossil-Fuel Electric Power Generation')$CO2_eq
+
+wilcox_test <- wilcox.test(oil_gas_data, power_gen_data)
+print(wilcox_test)
+```
+
+The extremely small p-value leads us to means I reject null hypothesis. Therefore, there is a significant difference in the mean CO2 equivalent emissions between Oil and Gas Extraction facilities and Fossil-Fuel Electric Power Generation facilities.
+
+
+## Three-sample Mean Difference Test
+(8 marks) Please follow the same procedure above to test whether the means of CO2 eq emissions for Oil and Gas Extraction, Fossil-Fuel Electric Power Generation, and Waste Treatment and Disposal facilities are the same.
+
+Null Hypothesis (Ho): The mean CO2 equivalent emissions are equal across all three facility types.
+Ho: μ1 = μ2 = μ1
+
+Alternative Hypothesis (Ha): At least one facility type has a different mean CO2 equivalent emission from the others.
+Ha: Not all μ are equal, μ1 != μ2 != μ1
+
+Data visualization:
+
+- Not normal: The histograms and Q–Q plots for each facility type show skewed data with outliers.
+
+- The Kruskal–Wallis test ranks all observations, making it less prone to error to extreme values and
+non‐normal distributions; it avoids problems caused by large outliers in one group.
+
+These were violations of one way anova:
+1. Dependent variable is an approximate normal distribution.
+2. ach group has roughly equal variances
+
+I will be using the Kruskal–Wallis test to check my hypothesis for the three facilities.
+
+
+Interpretation of results:
+Because the p-value is extremely small, I reject the null hypothesis that the mean CO2 eq emissions are equal across all three facility types. Therefore, there is at least one facility that differs significantly in emissions. I can be higher or lower, this test only tells us that one facility differs.
+
+```{r}
+three_facility_subset <- subset(filtered_GHG_emission, 
+                             (E_NAIC_Name == 'Oil and gas extraction (except oil sands)' | 
+                              E_NAIC_Name == 'Fossil-Fuel Electric Power Generation' |
+                              E_NAIC_Name == 'Waste Treatment and Disposal'))
+
+# Oil and Gas facilities histo
+hist(subset(three_facility_subset, 
+           E_NAIC_Name == 'Oil and gas extraction (except oil sands)')$CO2_eq,
+     main = "Histogram of CO2 Emissions - Oil and Gas",
+     xlab = "CO2 Emissions (kt CO2 eq)")
+
+# Power Generation facilities histo
+hist(subset(three_facility_subset, 
+           E_NAIC_Name == 'Fossil-Fuel Electric Power Generation')$CO2_eq,
+     main = "Histogram of CO2 Emissions - Power Generation",
+     xlab = "CO2 Emissions (kt CO2 eq)")
+
+# Waste Treatment facilities histo
+hist(subset(three_facility_subset, 
+           E_NAIC_Name == 'Waste Treatment and Disposal')$CO2_eq,
+     main = "Histogram of CO2 Emissions - Waste Treatment",
+     xlab = "CO2 Emissions (kt CO2 eq)")
+
+# Oil and Gas facilities QQ
+qqnorm(subset(three_facility_subset, 
+             E_NAIC_Name == 'Oil and gas extraction (except oil sands)')$CO2_eq,
+       main = "QQ Plot - Oil and Gas")
+qqline(subset(three_facility_subset, 
+             E_NAIC_Name == 'Oil and gas extraction (except oil sands)')$CO2_eq)
+
+# Power Generation facilities QQ
+qqnorm(subset(three_facility_subset, 
+             E_NAIC_Name == 'Fossil-Fuel Electric Power Generation')$CO2_eq,
+       main = "QQ Plot - Power Generation")
+qqline(subset(three_facility_subset, 
+             E_NAIC_Name == 'Fossil-Fuel Electric Power Generation')$CO2_eq)
+
+# Waste Treatment facilities QQ
+qqnorm(subset(three_facility_subset, 
+             E_NAIC_Name == 'Waste Treatment and Disposal')$CO2_eq,
+       main = "QQ Plot - Waste Treatment")
+qqline(subset(three_facility_subset, 
+             E_NAIC_Name == 'Waste Treatment and Disposal')$CO2_eq)
+
+# Box plot
+boxplot(CO2_eq ~ E_NAIC_Name, data = three_facility_subset,
+        main = "Box Plot of CO2 Emissions by Facility Type",
+        xlab = "Facility Type", ylab = "CO2 Emissions (kt CO2 eq)",
+        names = c("Power Generation", "Oil and Gas", "Waste Treatment"))
+
+#Statistical Test (2 marks)
+three_facility_subset <- subset(filtered_GHG_emission, 
+                             (E_NAIC_Name == 'Oil and gas extraction (except oil sands)' | 
+                              E_NAIC_Name == 'Fossil-Fuel Electric Power Generation' |
+                              E_NAIC_Name == 'Waste Treatment and Disposal'))
+
+kruskal_test <- kruskal.test(CO2_eq ~ E_NAIC_Name, data = three_facility_subset)
+print(kruskal_test)
+```
