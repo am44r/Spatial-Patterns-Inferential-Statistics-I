@@ -1,5 +1,4 @@
 ---
-title: "GGR276 Lab 2 Part 2 Sampling Data and Inferential Statistics"
 author: "Amaar Sana"
 date: "2025-03-10"
 output: html_document
@@ -10,7 +9,7 @@ knitr::opts_chunk$set(echo = TRUE)
 ```
 
 
-# Part B1. Sampling Data
+# Sampling Data
 ## Import Data
 
 
@@ -50,8 +49,6 @@ stratified_sample <- subset_facilities %>%
   ungroup()
 ```
 
-(4 marks) Now, it is your turn. Please create a stratified sample consisting of Oil and Gas Extraction, Fossil-Fuel Electric Power Generation, and Waste Treatment and Disposal (E_NAIC_Name = Waste Treatment and Disposal) facilities. For each category, make the sample size equal to 60. To make the result reproducible, please add code `set.seed(123)` prior to your sampling.
-
 ```{r}
 set.seed(123)
 
@@ -70,7 +67,6 @@ three_facility_stratified <- three_facility_subset %>%
 
 
 ## Compare Sampling Technique
-(4 marks) What is the difference between simple random sampling and stratified sampling? In this case, would you use simple random sampling or stratified sampling?   
 
 Simple random sampling selects observations at random from the entire population, giving each observation an equal probability of being selected. This method might not properly represent subgroups if they vary in size in the population or if some are clustered in particular areas.
 
@@ -81,7 +77,6 @@ In this case, stratified sampling would be more better. Firstly, I'm interested 
 
 # Part B2. Inferential Statistics
 ## Two-sample difference of mean test 
-(2 marks) I wonder if the mean carbon dioxide equivalents (kt CO2 eq) emissions differs between Oil and Gas Extraction facilities with Fossil-Fuel Electric Power Generation facilities. Write the null hypothesis and alternate hypothesis.
 
 Null Hypothesis (Ho): There is no significant difference in the mean CO2 equivalent emissions between Oil and Gas Extraction facilities and Fossil-Fuel Electric Power Generation facilities.
 
@@ -94,8 +89,6 @@ Ha: μ1 != μ2
 μ1 represents the mean CO2 equivalent emissions for Oil and Gas Extraction facilities
 μ2 represents the mean CO2 equivalent emissions for Fossil-Fuel Electric Power Generation facilities 
 
-
-(4 marks) Please select an appropriate statistical test, and provide justifications by visualizing the distribution. 
 
 - Histograms show a heavy right skew, with most values clustered at the lower end and a long tail extending to the right.
 
@@ -146,8 +139,6 @@ boxplot(CO2_eq ~ E_NAIC_Name, data = two_facility_subset,
 ```
 
 
-(4 marks) Please write R script to conduct the statistic test and interpret the results. 
-
 ```{r}
 oil_gas_data <- subset(two_facility_subset, 
                        E_NAIC_Name == 'Oil and gas extraction (except oil sands)')$CO2_eq
@@ -162,7 +153,6 @@ The extremely small p-value leads us to means I reject null hypothesis. Therefor
 
 
 ## Three-sample Mean Difference Test
-(8 marks) Please follow the same procedure above to test whether the means of CO2 eq emissions for Oil and Gas Extraction, Fossil-Fuel Electric Power Generation, and Waste Treatment and Disposal facilities are the same.
 
 Null Hypothesis (Ho): The mean CO2 equivalent emissions are equal across all three facility types.
 Ho: μ1 = μ2 = μ1
@@ -238,7 +228,7 @@ boxplot(CO2_eq ~ E_NAIC_Name, data = three_facility_subset,
         xlab = "Facility Type", ylab = "CO2 Emissions (kt CO2 eq)",
         names = c("Power Generation", "Oil and Gas", "Waste Treatment"))
 
-#Statistical Test (2 marks)
+#Statistical Test
 three_facility_subset <- subset(filtered_GHG_emission, 
                              (E_NAIC_Name == 'Oil and gas extraction (except oil sands)' | 
                               E_NAIC_Name == 'Fossil-Fuel Electric Power Generation' |
