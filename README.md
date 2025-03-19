@@ -1,0 +1,1 @@
+# Spatial-Patterns-Inferential-Statistics-I
