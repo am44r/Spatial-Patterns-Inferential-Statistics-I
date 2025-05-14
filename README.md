@@ -1,7 +1,7 @@
-# 🌍 GGR276 - Spatial Patterns & Inferential Statistics  
+# Spatial & Inferential Statistics  
 
 ## 📖 Overview  
-This project is part of **Spatial Data Science I (GGR276)** at the **University of Toronto Mississauga**. The objective is to analyze **global surface air temperature trends** and **greenhouse gas emissions** using **spatial statistics and inferential methods** in **ArcGIS Pro and R**.  
+The objective is to analyze **global surface air temperature trends** and **greenhouse gas emissions** using **spatial statistics and inferential methods** in **ArcGIS Pro and R**.  
 
 ## 🎯 Objectives  
 - **Create probability maps** and analyze **spatial patterns** using physical science datasets.  
